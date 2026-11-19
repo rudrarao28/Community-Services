@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In{% endblock %}
+
+{% block content_member %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-5">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-primary-gradient text-white text-center py-4">
+                <i class="fa-solid fa-graduation-cap fa-3x mb-2 text-warning"></i>
+                <h3 class="fw-bold mb-1">Library Management System</h3>
+                <p class="text-white-50 small mb-0">Sign in to access catalog, borrows, and account services</p>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <form method="POST" action="{{ url_for('auth.login') }}" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        <label for="{{ form.email.id }}" class="form-label fw-semibold">
+                            <i class="fa-regular fa-envelope me-1 text-primary"></i> Email Address
+                        </label>
+                        {{ form.email(class="form-control form-control-lg fs-6" + (" is-invalid" if form.email.errors else ""), placeholder="name@university.edu", required=True) }}
+                        {% for error in form.email.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="{{ form.password.id }}" class="form-label fw-semibold mb-0">
+                                <i class="fa-solid fa-lock me-1 text-primary"></i> Password
+                            </label>
+                            <a href="{{ url_for('auth.forgot_password') }}" class="small text-decoration-none text-primary">Forgot password?</a>
+                        </div>
+                        {{ form.password(class="form-control form-control-lg fs-6" + (" is-invalid" if form.password.errors else ""), placeholder="Enter your password", required=True) }}
+                        {% for error in form.password.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        {{ form.remember_me(class="form-check-input") }}
+                        <label class="form-check-label small" for="{{ form.remember_me.id }}">
+                            Remember me on this browser
+                        </label>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg fw-semibold shadow-sm">
+                            <i class="fa-solid fa-right-to-bracket me-2"></i> Sign In
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3">
+                    <span class="text-muted small">New student?</span>
+                    <a href="{{ url_for('auth.register') }}" class="small fw-semibold text-decoration-none"> Register an account</a>
+                </div>
+
+                <!-- Quick Seed Demo Credentials for Viva -->
+                <div class="card bg-light border-0 mt-4 rounded-3 p-3">
+                    <div class="fw-bold small text-secondary mb-2">
+                        <i class="fa-solid fa-key text-warning me-1"></i> Demo Credentials (Quick Fill)
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="fillCreds('admin@univ.edu', 'Admin@123')">
+                            <i class="fa-solid fa-shield-halved me-1"></i> Admin
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" onclick="fillCreds('student1@univ.edu', 'Student@123')">
+                            <i class="fa-solid fa-user-graduate me-1"></i> Student
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillCreds(email, password) {
+    document.getElementById('{{ form.email.id }}').value = email;
+    document.getElementById('{{ form.password.id }}').value = password;
+}
+</script>
+{% endblock %}

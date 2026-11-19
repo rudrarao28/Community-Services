@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content_member %}
+    {% include 'books/_view_content.html' %}
+{% endblock %}
+
+{% block content %}
+    {% include 'books/_view_content.html' %}
+{% endblock %}

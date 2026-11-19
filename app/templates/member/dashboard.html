@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}My Student Dashboard{% endblock %}
+
+{% block content_member %}
+<!-- Student Welcome Banner -->
+<div class="p-4 p-md-5 mb-4 rounded-4 bg-hero shadow-sm">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-2">
+                <i class="fa-solid fa-graduation-cap me-1"></i> SDG 4: Quality & Inclusive Education
+            </span>
+            <h2 class="display-6 fw-bold mb-1">Welcome, {{ current_user.name }}!</h2>
+            <p class="lead mb-0 text-white-50">
+                Student ID: <strong>{{ current_user.student_id or 'Not Registered' }}</strong> &bull; Member Status: <span class="badge bg-success rounded-pill">Active</span>
+            </p>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+            <a href="{{ url_for('books.catalogue') }}" class="btn btn-warning fw-bold px-4 shadow">
+                <i class="fa-solid fa-magnifying-glass me-1"></i> Browse Book Catalogue
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Overdue Warning Banner if Applicable -->
+{% if overdue_borrows %}
+    <div class="alert alert-danger shadow-sm border-danger border-2 rounded-4 mb-4 p-4 d-flex align-items-start gap-3">
+        <i class="fa-solid fa-triangle-exclamation fs-2 text-danger mt-1"></i>
+        <div>
+            <h5 class="fw-bold mb-1">Attention: Overdue Books Detected!</h5>
+            <p class="mb-2">
+                You have <strong>{{ overdue_borrows|length }} book(s)</strong> that have passed their due return date. Late fines are currently accruing at <strong>Rs. {{ fine_per_day|int }}/day</strong>. Please return them to the library desk immediately to avoid registration hold.
+            </p>
+            <div class="fw-semibold text-danger">Estimated Overdue Liability: Rs. {{ "%.2f"|format(current_accrued_fine) }}</div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card shadow-sm h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Active Loans</span>
+                    <h3 class="fw-bold my-1 text-primary">{{ active_borrows|length }} / {{ max_borrow_limit }}</h3>
+                    <small class="text-secondary">Quota limit: {{ max_borrow_limit }} books</small>
+                </div>
+                <div class="kpi-icon-box bg-primary-subtle text-primary">
+                    <i class="fa-solid fa-book-reader"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card shadow-sm h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Overdue Alerts</span>
+                    <h3 class="fw-bold my-1 {% if overdue_borrows %}text-danger{% else %}text-success{% endif %}">
+                        {{ overdue_borrows|length }}
+                    </h3>
+                    <small class="text-secondary">{% if overdue_borrows %}Action required{% else %}All loans on time{% endif %}</small>
+                </div>
+                <div class="kpi-icon-box {% if overdue_borrows %}bg-danger-subtle text-danger{% else %}bg-success-subtle text-success{% endif %}">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card shadow-sm h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Unpaid Late Fines</span>
+                    <h3 class="fw-bold my-1 {% if current_accrued_fine > 0 %}text-danger{% else %}text-muted{% endif %}">
+                        Rs. {{ "%.2f"|format(current_accrued_fine) }}
+                    </h3>
+                    <small class="text-secondary">Rate: Rs. {{ fine_per_day|int }}/day</small>
+                </div>
+                <div class="kpi-icon-box bg-warning-subtle text-warning">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card shadow-sm h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Book Reservations</span>
+                    <h3 class="fw-bold my-1 text-info">{{ active_reservations|length }}</h3>
+                    <small class="text-secondary">Waiting list items</small>
+                </div>
+                <div class="kpi-icon-box bg-info-subtle text-info">
+                    <i class="fa-solid fa-bookmark"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Loans Table -->
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0">
+            <i class="fa-solid fa-book-open-reader text-primary me-2"></i> Currently Issued Books
+        </h5>
+        <span class="badge bg-light text-secondary border">{{ active_borrows|length }} Active Loan(s)</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 table-custom">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Book Title & Author</th>
+                    <th>ISBN</th>
+                    <th>Issue Date</th>
+                    <th>Due Return Date</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end pe-4">Late Fine</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in active_borrows %}
+                    <tr>
+                        <td class="ps-4">
+                            <a href="{{ url_for('books.view_book', book_id=tx.book.id) }}" class="fw-semibold text-decoration-none text-body">
+                                {{ tx.book.title }}
+                            </a>
+                            <div class="text-muted small">{{ tx.book.author }} &bull; {{ tx.book.category.name }}</div>
+                        </td>
+                        <td class="font-monospace small text-muted">{{ tx.book.isbn }}</td>
+                        <td class="small">{{ tx.issue_date.strftime('%b %d, %Y') }}</td>
+                        <td class="small {% if tx.is_overdue %}text-danger fw-bold{% endif %}">
+                            {{ tx.due_date.strftime('%b %d, %Y') }}
+                            {% if tx.is_overdue %}
+                                <div class="badge bg-danger rounded-pill" style="font-size: 0.7rem;">{{ tx.days_overdue }} days late</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if tx.is_overdue %}
+                                <span class="badge bg-danger rounded-pill badge-overdue">Overdue</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Active Loan</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4 font-monospace">
+                            {% set fine = tx.calculate_current_fine(rate_per_day=fine_per_day) %}
+                            {% if fine > 0 %}
+                                <span class="text-danger fw-bold">Rs. {{ "%.2f"|format(fine) }}</span>
+                            {% else %}
+                                <span class="text-muted">Rs. 0.00</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-book-open fa-3x opacity-25 mb-2"></i>
+                            <p class="mb-0">You currently have no borrowed books.</p>
+                            <a href="{{ url_for('books.catalogue') }}" class="btn btn-primary btn-sm rounded-pill px-4 mt-2">Explore Catalogue</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Bottom Section: Active Reservations & Completed Returns -->
+<div class="row g-4">
+    <!-- Active Reservations -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">
+                    <i class="fa-solid fa-bookmark text-info me-2"></i> My Active Reservations
+                </h5>
+                <a href="{{ url_for('member.my_reservations') }}" class="btn btn-sm btn-link text-decoration-none">View All</a>
+            </div>
+            <div class="card-body p-4 pt-1">
+                <div class="list-group list-group-flush">
+                    {% for res in active_reservations %}
+                        <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ res.book.title }}</h6>
+                                <small class="text-muted">Requested on {{ res.created_at.strftime('%b %d, %Y') }}</small>
+                            </div>
+                            <div class="text-end">
+                                {% if res.status == 'notified' or res.book.available_copies > 0 %}
+                                    <span class="badge bg-success rounded-pill mb-1 d-block">Copy Available!</span>
+                                    <small class="text-success fw-semibold">Visit desk</small>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark rounded-pill mb-1 d-block">In Queue</span>
+                                    <small class="text-muted">Awaiting return</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted small py-3 mb-0">No active book reservations.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Returned Books -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">
+                    <i class="fa-solid fa-clock-rotate-left text-success me-2"></i> Recently Returned
+                </h5>
+                <a href="{{ url_for('member.borrow_history') }}" class="btn btn-sm btn-link text-decoration-none">Full History</a>
+            </div>
+            <div class="card-body p-4 pt-1">
+                <div class="list-group list-group-flush">
+                    {% for tx in recent_returns %}
+                        <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ tx.book.title }}</h6>
+                                <small class="text-muted">Returned on {{ tx.return_date.strftime('%b %d, %Y') if tx.return_date else '—' }}</small>
+                            </div>
+                            <div class="text-end font-monospace small">
+                                {% if tx.fine_amount > 0 %}
+                                    <span class="text-danger">Fine: Rs. {{ "%.2f"|format(tx.fine_amount) }}</span>
+                                {% else %}
+                                    <span class="text-success">&check; On Time</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted small py-3 mb-0">No completed returns yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

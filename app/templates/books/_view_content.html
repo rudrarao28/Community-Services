@@ -1,0 +1,123 @@
+<div class="row justify-content-center py-4">
+    <div class="col-lg-10">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('books.catalogue') }}">Catalogue</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('books.catalogue', category=book.category_id) }}">{{ book.category.name }}</a></li>
+                <li class="breadcrumb-item active text-truncate" aria-current="page">{{ book.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="row g-0">
+                <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-4 border-end">
+                    {% if book.cover_image %}
+                        <img src="{{ url_for('static', filename='uploads/' ~ book.cover_image) }}" alt="{{ book.title }}" class="img-fluid rounded-3 shadow-md" style="max-height: 400px; object-fit: contain;">
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fa-solid fa-book-bookmark fa-6x text-primary opacity-25 mb-3"></i>
+                            <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-6">
+                                {{ book.category.name }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-7 p-4 p-md-5 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">
+                            {{ book.category.name }}
+                        </span>
+                        <span class="text-muted small">Catalog ID: #{{ book.id }}</span>
+                    </div>
+
+                    <h2 class="fw-bold mb-2">{{ book.title }}</h2>
+                    <h5 class="text-muted mb-4"><i class="fa-regular fa-user me-1"></i> Author: {{ book.author }}</h5>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <div class="p-3 rounded-3 bg-body-tertiary border">
+                                <small class="text-muted d-block">ISBN</small>
+                                <strong class="fs-6">{{ book.isbn }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="p-3 rounded-3 bg-body-tertiary border">
+                                <small class="text-muted d-block">Inventory Availability</small>
+                                {% if book.available_copies > 0 %}
+                                    <span class="badge bg-success fs-6">
+                                        <i class="fa-solid fa-circle-check me-1"></i> {{ book.available_copies }} of {{ book.total_copies }} Available
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger fs-6">
+                                        <i class="fa-solid fa-circle-xmark me-1"></i> All {{ book.total_copies }} Copies Issued
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-4 mt-auto">
+                        {% if current_user.is_authenticated and current_user.is_admin %}
+                            <!-- Admin Controls -->
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{{ url_for('admin.issue_book', prefill_book_id=book.id) }}" class="btn btn-primary px-4 fw-semibold">
+                                    <i class="fa-solid fa-arrow-up-from-bracket me-1"></i> Issue This Book
+                                </a>
+                                <a href="{{ url_for('books.edit_book', book_id=book.id) }}" class="btn btn-outline-secondary px-3">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> Edit Book
+                                </a>
+                                <a href="{{ url_for('books.manage_books') }}" class="btn btn-link text-decoration-none">
+                                    Back to Inventory
+                                </a>
+                            </div>
+                        {% elif current_user.is_authenticated and not current_user.is_admin %}
+                            <!-- Student Member Controls -->
+                            {% if user_has_borrowed %}
+                                <div class="alert alert-info d-flex align-items-center gap-2 mb-0">
+                                    <i class="fa-solid fa-circle-info fs-5"></i>
+                                    <div>You currently have an active issue copy of this book.</div>
+                                </div>
+                            {% elif book.available_copies > 0 %}
+                                <div class="alert alert-success d-flex align-items-center gap-2 mb-0">
+                                    <i class="fa-solid fa-circle-check fs-5"></i>
+                                    <div>
+                                        <strong>Available for Checkout!</strong>
+                                        Please visit the library circulation desk with your Student ID (<strong>{{ current_user.student_id }}</strong>) to borrow this book.
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- Out of stock: reservation queue -->
+                                {% if user_reservation %}
+                                    <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
+                                        <i class="fa-solid fa-clock fs-5"></i>
+                                        <div>
+                                            You have a <strong>pending reservation</strong> for this book requested on {{ user_reservation.created_at.strftime('%b %d, %Y') }}. You will receive a notification when a copy is returned!
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('books.reserve_book', book_id=book.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <button type="submit" class="btn btn-warning fw-bold px-4 py-2">
+                                                <i class="fa-solid fa-bookmark me-1"></i> Place Reservation Request
+                                            </button>
+                                            <small class="text-muted">You will be placed next in line when this book is returned.</small>
+                                        </div>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-secondary d-flex align-items-center justify-content-between mb-0">
+                                <div>
+                                    <i class="fa-solid fa-lock me-1"></i> Please sign in to borrow or reserve books.
+                                </div>
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm px-3">Sign In</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

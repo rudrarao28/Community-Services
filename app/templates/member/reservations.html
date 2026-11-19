@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}My Book Reservations{% endblock %}
+
+{% block content_member %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">My Reserved Books Queue</h3>
+        <p class="text-muted small mb-0">Track waiting status for academic books requested when physical copies were out of stock.</p>
+    </div>
+    <div class="mt-2 mt-sm-0">
+        <a href="{{ url_for('books.catalogue') }}" class="btn btn-primary fw-semibold btn-sm">
+            <i class="fa-solid fa-magnifying-glass me-1"></i> Search More Titles
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 table-custom">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Request ID</th>
+                    <th>Book Title & Author</th>
+                    <th>Date Requested</th>
+                    <th class="text-center">Current Shelf Availability</th>
+                    <th class="text-center">Queue Status</th>
+                    <th class="text-end pe-4">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in reservations %}
+                    <tr>
+                        <td class="ps-4 font-monospace fw-bold">#{{ res.id }}</td>
+                        <td>
+                            <a href="{{ url_for('books.view_book', book_id=res.book.id) }}" class="fw-semibold text-decoration-none text-body">
+                                {{ res.book.title }}
+                            </a>
+                            <div class="text-muted small">{{ res.book.author }} &bull; ISBN: {{ res.book.isbn }}</div>
+                        </td>
+                        <td class="small">{{ res.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="text-center">
+                            {% if res.book.available_copies > 0 %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                    <i class="fa-solid fa-circle-check"></i> {{ res.book.available_copies }} on shelf!
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill">0 Copies</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if res.status == 'fulfilled' %}
+                                <span class="badge bg-success rounded-pill">Fulfilled & Borrowed</span>
+                            {% elif res.status == 'notified' or res.book.available_copies > 0 %}
+                                <span class="badge bg-info text-dark rounded-pill">Available for Pickup</span>
+                            {% elif res.status == 'cancelled' %}
+                                <span class="badge bg-secondary rounded-pill">Cancelled</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark rounded-pill">Pending in Queue</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            {% if res.status in ['pending', 'notified'] %}
+                                <form method="POST" action="{{ url_for('member.cancel_reservation', res_id=res.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this book reservation?')">
+                                        <i class="fa-solid fa-xmark me-1"></i> Cancel
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-bookmark fa-3x opacity-25 mb-2"></i>
+                            <p class="mb-0">You have no book reservation requests.</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

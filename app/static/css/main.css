@@ -1,0 +1,164 @@
+/* =====================================================================
+   University Library Management System (SDG 4 - Quality Education)
+   Main Application Stylesheet
+   ===================================================================== */
+
+:root {
+    --primary-blue: #1e40af;
+    --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    --accent-gold: #f59e0b;
+    --sidebar-width: 260px;
+    --card-border-radius: 12px;
+}
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Background Gradients */
+.bg-primary-gradient {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+}
+
+.bg-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: white;
+}
+
+/* Admin Sidebar Layout */
+.admin-wrapper {
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    transition: transform 0.3s ease-in-out;
+    z-index: 1040;
+}
+
+.admin-sidebar .nav-link {
+    font-size: 0.92rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    opacity: 0.88;
+}
+
+.admin-sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    opacity: 1;
+    transform: translateX(3px);
+}
+
+.admin-sidebar .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    font-weight: 600;
+    opacity: 1;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 768px) {
+    .admin-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+    }
+    .admin-sidebar.show {
+        transform: translateX(0);
+    }
+}
+
+/* Avatar Circle */
+.avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+}
+
+/* Metric KPI Cards */
+.kpi-card {
+    border-radius: var(--card-border-radius);
+    border: 1px solid var(--bs-border-color-subtle);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+/* Book Card */
+.book-card {
+    border-radius: var(--card-border-radius);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border: 1px solid var(--bs-border-color-translucent);
+}
+
+.book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+.book-card-cover {
+    height: 220px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-bs-theme="dark"] .book-card-cover {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+/* Overdue Badge Pulse */
+.badge-overdue {
+    background-color: #ef4444;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Tables */
+.table-custom th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--bs-secondary-color);
+}
+
+/* Toast Container positioning */
+.toast-container {
+    pointer-events: none;
+}
+.toast {
+    pointer-events: auto;
+}

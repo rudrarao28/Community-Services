@@ -1,0 +1,44 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+      {% for category, message in messages %}
+        <div class="toast align-items-center text-bg-{{ 'primary' if category == 'message' else category }} border-0 show shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+          <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2">
+              {% if category == 'success' %}
+                <i class="fa-solid fa-circle-check fs-5"></i>
+              {% elif category in ['danger', 'error'] %}
+                <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+              {% elif category == 'warning' %}
+                <i class="fa-solid fa-circle-exclamation fs-5"></i>
+              {% else %}
+                <i class="fa-solid fa-circle-info fs-5"></i>
+              {% endif %}
+              <div>{{ message }}</div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Also show top inline alert banner for high visibility -->
+    <div class="flash-messages mb-4">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'primary' if category == 'message' else ('danger' if category == 'error' else category) }} alert-dismissible fade show shadow-sm d-flex align-items-center gap-2" role="alert">
+          {% if category == 'success' %}
+            <i class="fa-solid fa-circle-check fs-5"></i>
+          {% elif category in ['danger', 'error'] %}
+            <i class="fa-solid fa-circle-xmark fs-5"></i>
+          {% elif category == 'warning' %}
+            <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+          {% else %}
+            <i class="fa-solid fa-circle-info fs-5"></i>
+          {% endif %}
+          <div class="flex-grow-1">{{ message }}</div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}

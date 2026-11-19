@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Reservations{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Book Reservation Requests</h3>
+        <p class="text-muted small mb-0">Monitor waiting lists for books that were out of stock when requested by students.</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 table-custom">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Req ID</th>
+                    <th>Student Name</th>
+                    <th>Book Title</th>
+                    <th>Requested Date</th>
+                    <th class="text-center">Current Shelf Stock</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in reservations_list %}
+                    <tr>
+                        <td class="ps-4 font-monospace fw-bold">#{{ res.id }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ res.user.name }}</div>
+                            <small class="text-muted font-monospace">{{ res.user.student_id or 'No ID' }}</small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">{{ res.book.title }}</div>
+                            <small class="text-muted font-monospace">ISBN: {{ res.book.isbn }}</small>
+                        </td>
+                        <td class="small">{{ res.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+                        <td class="text-center">
+                            {% if res.book.available_copies > 0 %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                    {{ res.book.available_copies }} In Stock
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill">0 Copies</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if res.status == 'fulfilled' %}
+                                <span class="badge bg-success rounded-pill">Fulfilled</span>
+                            {% elif res.status == 'notified' %}
+                                <span class="badge bg-info text-dark rounded-pill">Copy Available / Notified</span>
+                            {% elif res.status == 'cancelled' %}
+                                <span class="badge bg-danger rounded-pill">Cancelled</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark rounded-pill">Pending Queue</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            {% if res.status in ['pending', 'notified'] %}
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.issue_book', prefill_book_id=res.book.id) }}" class="btn btn-outline-primary" title="Issue directly">
+                                        <i class="fa-solid fa-arrow-up-from-bracket me-1"></i> Issue
+                                    </a>
+                                    <form method="POST" action="{{ url_for('admin.update_reservation_status', res_id=res.id, new_status='fulfilled') }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-success" title="Mark fulfilled">
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.update_reservation_status', res_id=res.id, new_status='cancelled') }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-danger" title="Cancel request">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-bookmark fa-3x opacity-25 mb-2"></i>
+                            <p class="mb-0">No reservation requests registered in the waiting list.</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

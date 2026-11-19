@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}My Borrowing History{% endblock %}
+
+{% block content_member %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">My Borrowing & Return History</h3>
+        <p class="text-muted small mb-0">Record of all academic resources checked out from the University Community Library.</p>
+    </div>
+    <div class="mt-2 mt-sm-0">
+        <a href="{{ url_for('books.catalogue') }}" class="btn btn-primary fw-semibold btn-sm">
+            <i class="fa-solid fa-magnifying-glass me-1"></i> Browse Books
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 table-custom">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Tx ID</th>
+                    <th>Book Details</th>
+                    <th>Issue Date</th>
+                    <th>Due Date</th>
+                    <th>Return Date</th>
+                    <th class="text-center">Fine (Rs)</th>
+                    <th class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if transactions.items %}
+                    {% for tx in transactions.items %}
+                        <tr>
+                            <td class="ps-4 font-monospace fw-bold">#{{ tx.id }}</td>
+                            <td>
+                                <a href="{{ url_for('books.view_book', book_id=tx.book.id) }}" class="fw-semibold text-decoration-none text-body">
+                                    {{ tx.book.title }}
+                                </a>
+                                <div class="text-muted small">{{ tx.book.author }} &bull; ISBN: {{ tx.book.isbn }}</div>
+                            </td>
+                            <td class="small">{{ tx.issue_date.strftime('%b %d, %Y') }}</td>
+                            <td class="small {% if tx.is_overdue %}text-danger fw-bold{% endif %}">{{ tx.due_date.strftime('%b %d, %Y') }}</td>
+                            <td class="small">{{ tx.return_date.strftime('%b %d, %Y') if tx.return_date else 'Not Returned' }}</td>
+                            <td class="text-center font-monospace">
+                                {% if tx.fine_amount > 0 %}
+                                    <span class="text-danger fw-bold">Rs. {{ "%.2f"|format(tx.fine_amount) }}</span>
+                                {% else %}
+                                    <span class="text-muted">Rs. 0.00</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if tx.status == 'returned' %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Returned</span>
+                                {% elif tx.is_overdue %}
+                                    <span class="badge bg-danger rounded-pill badge-overdue">Overdue</span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill">Issued</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-receipt fa-3x opacity-25 mb-2"></i>
+                            <p class="mb-0">No past borrowing history found.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if transactions.pages > 1 %}
+    <nav class="mt-4" aria-label="History pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not transactions.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('member.borrow_history', page=transactions.prev_num) }}">Previous</a>
+            </li>
+            {% for p in transactions.iter_pages() %}
+                {% if p %}
+                    <li class="page-item {% if p == transactions.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('member.borrow_history', page=p) }}">{{ p }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not transactions.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('member.borrow_history', page=transactions.next_num) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

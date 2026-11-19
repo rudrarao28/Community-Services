@@ -1,0 +1,219 @@
+<!-- Catalogue Header Banner -->
+<div class="p-4 p-md-5 mb-4 rounded-4 bg-hero shadow-sm">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-2">
+                <i class="fa-solid fa-graduation-cap me-1"></i> SDG 4: Quality & Inclusive Education
+            </span>
+            <h1 class="display-6 fw-bold mb-2">University Book Catalogue</h1>
+            <p class="lead mb-0 text-white-50">
+                Explore thousands of academic textbooks, research papers, literature, and periodicals.
+            </p>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+            {% if current_user.is_authenticated and current_user.is_admin %}
+                <a href="{{ url_for('books.add_book') }}" class="btn btn-warning fw-bold px-4 shadow">
+                    <i class="fa-solid fa-plus me-1"></i> Add New Book
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body p-3 p-md-4">
+        <form method="GET" action="{{ url_for('books.catalogue') }}" id="catalogueSearchForm" class="row g-3 align-items-center">
+            <!-- Search Keyword Input -->
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                    </span>
+                    <input type="text" name="q" id="searchInput" class="form-control bg-light border-start-0" 
+                           placeholder="Search by Title, Author, ISBN, or Book ID..." 
+                           value="{{ search_query }}">
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="col-md-3">
+                <select name="category" id="categorySelect" class="form-select bg-light">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Availability Filter -->
+            <div class="col-md-2">
+                <select name="availability" id="availabilitySelect" class="form-select bg-light">
+                    <option value="all" {% if availability == 'all' %}selected{% endif %}>All Availability</option>
+                    <option value="available" {% if availability == 'available' %}selected{% endif %}>Available Now</option>
+                    <option value="unavailable" {% if availability == 'unavailable' %}selected{% endif %}>Out of Stock</option>
+                </select>
+            </div>
+
+            <!-- Sort By -->
+            <div class="col-md-2">
+                <select name="sort" id="sortSelect" class="form-select bg-light">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="title_asc" {% if sort_by == 'title_asc' %}selected{% endif %}>Title (A-Z)</option>
+                    <option value="title_desc" {% if sort_by == 'title_desc' %}selected{% endif %}>Title (Z-A)</option>
+                    <option value="author_asc" {% if sort_by == 'author_asc' %}selected{% endif %}>Author (A-Z)</option>
+                    <option value="copies" {% if sort_by == 'copies' %}selected{% endif %}>Copies Available</option>
+                </select>
+            </div>
+        </form>
+
+        <!-- Category Quick Badges -->
+        <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+            <span class="small fw-semibold text-muted align-self-center me-1">Browse Quick:</span>
+            <a href="{{ url_for('books.catalogue') }}" class="badge rounded-pill text-decoration-none {% if not selected_category %}bg-primary text-white{% else %}bg-light text-secondary border{% endif %} px-3 py-2">
+                All
+            </a>
+            {% for cat in categories %}
+                <a href="{{ url_for('books.catalogue', category=cat.id, q=search_query, availability=availability, sort=sort_by) }}" 
+                   class="badge rounded-pill text-decoration-none {% if selected_category == cat.id %}bg-primary text-white{% else %}bg-light text-secondary border{% endif %} px-3 py-2">
+                    {{ cat.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Books Cards Grid -->
+<div class="row g-4" id="booksGrid">
+    {% if books.items %}
+        {% for book in books.items %}
+            <div class="col-sm-6 col-md-4 col-lg-4">
+                <div class="card h-100 book-card shadow-sm border-0">
+                    <div class="book-card-cover position-relative">
+                        {% if book.cover_image %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ book.cover_image) }}" alt="{{ book.title }}" class="w-100 h-100 object-fit-cover">
+                        {% else %}
+                            <div class="text-center p-3">
+                                <i class="fa-solid fa-book-open fa-3x text-primary opacity-50 mb-2"></i>
+                                <div class="badge bg-white text-primary border shadow-sm">{{ book.category.name }}</div>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Availability Badge overlay -->
+                        <div class="position-absolute top-0 end-0 m-3">
+                            {% if book.available_copies > 0 %}
+                                <span class="badge bg-success shadow-sm rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Available ({{ book.available_copies }})
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger shadow-sm rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-circle-xmark me-1"></i> Out of Stock
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-body d-flex flex-column p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">
+                                {{ book.category.name }}
+                            </span>
+                            <small class="text-muted font-monospace">#{{ book.id }}</small>
+                        </div>
+                        
+                        <h5 class="card-title fw-bold text-truncate mt-2" title="{{ book.title }}">
+                            <a href="{{ url_for('books.view_book', book_id=book.id) }}" class="text-decoration-none text-body">
+                                {{ book.title }}
+                            </a>
+                        </h5>
+                        <p class="card-text text-muted small mb-2">
+                            <i class="fa-regular fa-user me-1"></i> {{ book.author }}
+                        </p>
+                        <p class="card-text text-secondary small mb-3">
+                            <i class="fa-solid fa-barcode me-1"></i> ISBN: {{ book.isbn }}
+                        </p>
+
+                        <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                            <div class="small">
+                                <span class="text-muted">Copies: </span>
+                                <strong class="{% if book.available_copies > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ book.available_copies }}
+                                </strong> / {{ book.total_copies }}
+                            </div>
+                            <a href="{{ url_for('books.view_book', book_id=book.id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 py-5 text-center">
+            <div class="mb-3 text-muted">
+                <i class="fa-solid fa-book-open-reader fa-4x opacity-25"></i>
+            </div>
+            <h4 class="fw-bold">No books match your search criteria</h4>
+            <p class="text-muted">Try clearing your filters or searching with a different title, author, or ISBN.</p>
+            <a href="{{ url_for('books.catalogue') }}" class="btn btn-primary btn-sm rounded-pill px-4 mt-2">
+                Reset Catalogue Filters
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if books.pages > 1 %}
+    <nav class="mt-5" aria-label="Book catalogue pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not books.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('books.catalogue', page=books.prev_num, q=search_query, category=selected_category, availability=availability, sort=sort_by) }}">
+                    <i class="fa-solid fa-angle-left"></i> Previous
+                </a>
+            </li>
+
+            {% for p in books.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                    <li class="page-item {% if p == books.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('books.catalogue', page=p, q=search_query, category=selected_category, availability=availability, sort=sort_by) }}">{{ p }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                {% endif %}
+            {% endfor %}
+
+            <li class="page-item {% if not books.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('books.catalogue', page=books.next_num, q=search_query, category=selected_category, availability=availability, sort=sort_by) }}">
+                    Next <i class="fa-solid fa-angle-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+{% endif %}
+
+<!-- Live Filter Script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('catalogueSearchForm');
+    const categorySelect = document.getElementById('categorySelect');
+    const availabilitySelect = document.getElementById('availabilitySelect');
+    const sortSelect = document.getElementById('sortSelect');
+    const searchInput = document.getElementById('searchInput');
+
+    // Auto submit on dropdown change
+    [categorySelect, availabilitySelect, sortSelect].forEach(element => {
+        element.addEventListener('change', () => form.submit());
+    });
+
+    // Debounce search query input (500ms delay)
+    let debounceTimer;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            form.submit();
+        }, 600);
+    });
+});
+</script>

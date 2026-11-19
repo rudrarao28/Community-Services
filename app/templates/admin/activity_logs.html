@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Activity Logs{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">System Audit & Activity Logs</h3>
+        <p class="text-muted small mb-0">Traceability log tracking administrative operations, book inventory modifications, member status changes, and issue/return events.</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 table-custom">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4" style="width: 80px;">Log ID</th>
+                    <th style="width: 180px;">Timestamp</th>
+                    <th>Action Event Performed</th>
+                    <th class="text-end pe-4" style="width: 180px;">User / Actor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if logs.items %}
+                    {% for log in logs.items %}
+                        <tr>
+                            <td class="ps-4 font-monospace text-muted">#{{ log.id }}</td>
+                            <td class="font-monospace small text-muted">
+                                {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </td>
+                            <td>
+                                <span class="fw-semibold">{{ log.action }}</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                {% if log.user %}
+                                    <span class="badge bg-light text-primary border fw-semibold">
+                                        <i class="fa-regular fa-user me-1"></i> {{ log.user.name }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-muted border">System</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">No audit logs recorded yet.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if logs.pages > 1 %}
+    <nav class="mt-4" aria-label="Activity logs pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not logs.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.activity_logs', page=logs.prev_num) }}">Previous</a>
+            </li>
+            {% for p in logs.iter_pages() %}
+                {% if p %}
+                    <li class="page-item {% if p == logs.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.activity_logs', page=p) }}">{{ p }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not logs.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.activity_logs', page=logs.next_num) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}
